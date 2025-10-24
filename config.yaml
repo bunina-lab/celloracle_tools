@@ -1,0 +1,136 @@
+# CellOracle Gene Regulatory Network Inference Pipeline Configuration
+# This configuration file defines all parameters for running the CellOracle GRN pipeline
+
+# =============================================================================
+# INPUT DATA PATHS
+# =============================================================================
+
+# Path to RNA-seq h5ad file (AnnData format)
+rna_h5ad: "/path/to/your/rna_data.h5ad"
+
+# Path to peak names file (one peak per line, format: chr_start_end)
+peak_names_file: "/path/to/your/peak_names.txt"
+
+# Path to peak coaccessibility data (TSV format with columns: Peak1, Peak2, coaccess)
+peak_coaccess_path: "/path/to/your/peak_coaccessibility.tsv"
+
+# Path to Target Gene to Transcription Factor mapping JSON file
+TG2TF_json_path: "/path/to/your/TG2TF_mapping.json"
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+
+# Output directory for all results
+output_dir: "/path/to/output/directory"
+
+# Optional: Custom run name (defaults to current date if not specified)
+run_name: "celloracle_run_2024"
+
+# =============================================================================
+# GENOME AND REFERENCE CONFIGURATION
+# =============================================================================
+
+# Directory where genome files are stored
+genome_dir: "/path/to/genome/directory"
+
+# Reference genome directory
+reference_dir: "hg38"
+
+# =============================================================================
+# ANNDATA CONFIGURATION
+# =============================================================================
+
+# Column name in adata.obs containing cluster information
+cluster_column: "leiden"
+
+# Name of the embedding in adata.obsm (e.g., 'X_umap', 'X_tsne')
+embedding: "X_umap"
+
+# Whether to use raw counts (True) or normalized counts (False)
+raw_counts: true
+
+# =============================================================================
+# MOTIF ANALYSIS CONFIGURATION
+# =============================================================================
+
+# False positive rate for TF binding motif identification
+tf_binding_frp: 0.02
+
+# Motif filtering method: "cumulative_score" or "individual_score"
+motif_filtering_method: "cumulative_score"
+
+# Motif score threshold for filtering
+motif_threshold: 10
+
+# Whether to use only direct TF evidence (True) or both direct and indirect (False)
+TF_evidence_direct: false
+
+# =============================================================================
+# GRN INFERENCE CONFIGURATION
+# =============================================================================
+
+# P-value threshold for GRN edge filtering
+grn_edge_p_threshold: 0.001
+
+# =============================================================================
+# COMPUTATIONAL CONFIGURATION
+# =============================================================================
+
+# Number of CPU cores to use (will be overridden by --n_cpu command line argument)
+n_cpu: 4
+
+# Verbose output (True/False)
+verbose: false
+
+# =============================================================================
+# OPTIONAL PARAMETERS
+# =============================================================================
+
+# Path to motifs file (optional, will use default motifs if not specified)
+# motifs_file: "/path/to/custom/motifs.pkl"
+
+# Path to source gene list for GRN filtering (optional)
+# source_target_genelist: "/path/to/gene_list.txt"
+
+# =============================================================================
+# ADVANCED CONFIGURATION
+# =============================================================================
+
+# PCA component selection parameters
+pca_min_variance_threshold: 0.002
+pca_max_components: 50
+
+# KNN imputation parameters
+knn_imputation_k_factor: 0.02  # k = min(200, int(0.02 * n_cells))
+knn_imputation_balanced: true
+knn_imputation_b_sight_factor: 8  # b_sight = k * 8
+knn_imputation_b_maxl_factor: 4   # b_maxl = k * 4
+
+# Network inference parameters
+network_alpha: 10
+network_verbose_level: 10
+
+# Edge filtering parameters
+edge_filter_threshold_number: 20000
+
+# Plotting parameters
+plot_top_n_genes: 30
+plot_percentile: 99
+plot_scale_simulation: 0.5
+plot_point_size: 10
+
+# Simulation parameters
+simulation_alpha: 10
+simulation_n_propagation: 3
+simulation_n_neighbors: 200
+simulation_sampled_fraction: 0.3
+simulation_sampling_probs: [0.1, 0.05]
+simulation_sigma_corr: 0.05
+
+# Probability mass calculation parameters
+p_mass_smooth: 0.8
+p_mass_n_grid: 40
+p_mass_n_neighbors: 200
+p_mass_n_suggestion: 12
+p_mass_min_mass: 0.01
