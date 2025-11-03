@@ -331,29 +331,30 @@ class CellOraclePipeline:
     
 
     #### GRN inference ###
-    def process_grn_inference(self, cluster_colum, egde_p_value=0.001, genelist_source=None, genelist_target=None):
+    def process_grn_inference(self, cluster_colum, egde_p_value=0.001, weights_name="weight", genelist_source=None, genelist_target=None):
         if any([obj is None for obj in (self.oracle, self.base_grn)]):
             raise NotInitializedError("oracle or base_grn objects are not initialized. Call get_base_grn() or process_initialize_celloracle() methods first")
 
         ## initialize cluster specific network
         self.get_cluster_networks(cluster_colum)
-        self.filter_egdes(egde_p_value, genelist_source=genelist_source, genelist_target=genelist_target)
+        self.filter_edges(egde_p_value, weight=weights_name, genelist_source=genelist_source, genelist_target=genelist_target)
         self.save_network(cluster_colum)
 
         ## GRN summary statistics
         self.get_network_score()
-
         self.plot_node_degree_distibutions()
+        self.save_graph_summary_stats(cluster_colum)
 
         graph_stats= ["degree_centrality_all", "degree_centrality_in", "degree_centrality_out", "betweenness_centrality", "eigenvector_centrality"]
         self.plot_score_distributions(values=graph_stats)
         self.plot_network_entropy_distribution()
 
-        cluster_keys = self.network.links_dict.keys()
+        cluster_keys = list(self.network.links_dict.keys())
         
 
         for idx, cluster_key in enumerate(cluster_keys):
             self.plot_scores_rankings(cluster_key)
+            self.save_cluster_speficic_network(cluster_key)
 
             if idx+1 == len(cluster_keys): break
             for cluster_2_key in cluster_keys[idx+1:]:
@@ -373,20 +374,26 @@ class CellOraclePipeline:
             )
         return self.network
     
+    def save_cluster_speficic_network(self, cluster_key):
+        self.get_cluster_speficic_network(cluster_key).to_csv(f"{self.output_dir}/{cluster_key}_source_target_network.tsv", index=False, sep="\t")
+    
+    def get_cluster_speficic_network(self, cluster_key):
+        return self.network.links_dict[cluster_key]
+
     def save_network(self, cluster_column):
         self.network.to_hdf5(file_path=f"{self.output_dir}/f{cluster_column}.celloracle.links")
 
     def save_graph_summary_stats(self, cluster_column):
         self.network.merged_score.to_csv(f"{self.output_dir}/{cluster_column}_gene_graph_summary_stats.tsv", index=True, sep="\t")
 
-    def filter_egdes(self, p_value=0.001, weight="weight", genelist_source=None, genelist_target=None, threshold_number=20000):
+    def filter_edges(self, p_value=0.001, weight="coef_abs", genelist_source=None, genelist_target=None, threshold_number=20000):
         """
         p (float): threshold for p-value of the network edge.
         weight (str): Please select network weight name for the filtering
         genelist_source (list of str): gene list to remain in regulatory gene nodes. Default is None.
         genelist_target (list of str): gene list to remain in target gene nodes. Default is None.
         """
-        self.network.filter_links(p=p_value, weight=weight, threshold_number=threshold_number, genelist_source=genelist_source, genelist_target=genelist_target)
+        self.network.filter_links(p=p_value, weight="coef_abs", threshold_number=threshold_number, genelist_source=genelist_source, genelist_target=genelist_target)
 
     def plot_node_degree_distibutions(self):
         self.network.plot_degree_distributions(plot_model=False, save=self.output_dir)

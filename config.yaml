@@ -34,7 +34,7 @@ run_name: "celloracle_run_2024"
 # Directory where genome files are stored
 genome_dir: "/path/to/genome/directory"
 
-# Reference genome directory
+# Reference genome
 reference_dir: "hg38"
 
 # =============================================================================
