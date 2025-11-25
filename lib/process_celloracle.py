@@ -71,9 +71,9 @@ class CellOraclePipeline:
                 provider="UCSC", 
                 genomes_dir=self.genome_dir
             )
-            return True
+            return self.check_genome_installation()
         except Exception as e:
-            print(f"Couldn't install genome: {e}")
+            print(f"Couldn't install genome: \n{e}")
             return False
     
     ### START ORACLE OBJ ###
@@ -326,7 +326,7 @@ class CellOraclePipeline:
         
         # Get base GRN
         self.base_grn = self.tf_info.to_dataframe()
-        self.base_grn.to_parquet(f"{self.output_dir}/heart_data_base_GRN_dataframe.parquet")
+        self.base_grn.to_parquet(f"{self.output_dir}/base_GRN_dataframe.parquet")
         return self.base_grn
     
 
@@ -346,7 +346,7 @@ class CellOraclePipeline:
         self.save_graph_summary_stats(cluster_colum)
 
         graph_stats= ["degree_centrality_all", "degree_centrality_in", "degree_centrality_out", "betweenness_centrality", "eigenvector_centrality"]
-        self.plot_score_distributions(values=graph_stats)
+        self.plot_score_distributions()
         self.plot_network_entropy_distribution()
 
         cluster_keys = list(self.network.links_dict.keys())
@@ -358,12 +358,12 @@ class CellOraclePipeline:
 
             if idx+1 == len(cluster_keys): break
             for cluster_2_key in cluster_keys[idx+1:]:
-                map(lambda x: self.plot_score_comparisons(
-                                comparison_value=x,
+                if cluster_key == cluster_2_key: break
+                for graph_stat in graph_stats:
+                    self.plot_score_comparisons(
+                                comparison_value=graph_stat,
                                 cluster_1=cluster_key,
-                                cluster_2=cluster_2_key
-                ),graph_stats
-                )
+                                cluster_2=cluster_2_key)
 
 
     def get_cluster_networks(self, cluster_column):
@@ -396,7 +396,8 @@ class CellOraclePipeline:
         self.network.filter_links(p=p_value, weight="coef_abs", threshold_number=threshold_number, genelist_source=genelist_source, genelist_target=genelist_target)
 
     def plot_node_degree_distibutions(self):
-        self.network.plot_degree_distributions(plot_model=False, save=self.output_dir)
+        self.network.plot_degree_distributions(plot_model=False, save=f"{self.output_dir}/degree_distributions")
+        plt.close()
 
 
     def get_network_score(self):
@@ -409,6 +410,7 @@ class CellOraclePipeline:
                 n_gene=top_n_gene, 
                 save=f"{self.output_dir}/ranked_score/{cluster_name}"
         )
+        plt.close()
 
     def plot_score_comparisons(self, comparison_value, cluster_1, cluster_2, percentile=99):
         # Compare GRN score between two clusters
@@ -416,20 +418,24 @@ class CellOraclePipeline:
                                 value=comparison_value,
                                 cluster1=cluster_1, cluster2=cluster_2,
                                 percentile=percentile,
-                                save=f"{self.output_dir}/score_comparison/"
+                                save=f"{self.output_dir}/score_comparison/",
+                                plt_show=False
                                 )
+        plt.close()
 
     
-    def plot_score_distributions(self, values:List, method="boxplot"):
-        self.network.plot_score_discributions(values=values,
+    def plot_score_distributions(self, method="boxplot"):
+        self.network.plot_score_discributions(values=None,
                                method=method,
-                               save=self.output_dir,
+                               save=f"{self.output_dir}/score_distributions/",
                               )
+        plt.close()
     
     def plot_network_entropy_distribution(self):
         self.network.plot_network_entropy_distributions(
             save=self.output_dir
     )
+        plt.close()
     
     def get_cluster_network(self, cluster_name)->pd.DataFrame:
         """
